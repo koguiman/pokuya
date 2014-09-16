@@ -36,26 +36,7 @@ report=sphan(X)
 ##################################################################
 ###Report file generation
 savereport(report,reportname)
-with open(reportname, 'wb') as csvfile:
-    stwriter = csv.writer(csvfile, delimiter=' ',
-                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    stwriter.writerow(['Report of :'] + [name])
-    stwriter.writerow(['Fundamental frequency [Hz]'] + [str(fe)])
-    stwriter.writerow(['DC current [A]'] + [str(report['current']['I0'])])
-    stwriter.writerow(['DC voltage [V]'] + [str(report['voltage']['V0'])])
-    stwriter.writerow(['Fundamental current rms [A]'] + [str(report['current']['I50'])]+['Fundamental current peak [A]'] + [str(report['current']['I50']*sqrt(2))])
-    stwriter.writerow(['Fundamental voltage rms [V]'] + [str(report['voltage']['V50'])]+['Fundamental voltage peak [V]'] + [str(report['voltage']['V50']*sqrt(2))])
-    stwriter.writerow(['Current: THDf'] + [str(report['current']['I_THDf'])])
-    stwriter.writerow(['Voltage: THDf'] + [str(report['voltage']['V_THDf'])])
-    stwriter.writerow(['Current: THDr'] + [str(report['current']['I_THDr'])])
-    stwriter.writerow(['Voltage: THDr'] + [str(report['voltage']['V_THDr'])])
-    stwriter.writerow(['Displacement power factor DPF'] + [str(report['DPF'])])
-    stwriter.writerow(['Power factor PF'] + [str(report['PF'])])
-    stwriter.writerow(report['Harmonics']['colinfo'])
-    # Fhs,Ihs,Vhs
-    
-    for i in report['Harmonics']'Harmo']:
-            stwriter.writerow([str(i)])
+
     
 #################################################################
 ###########Ploting part
