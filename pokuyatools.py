@@ -1,11 +1,15 @@
-import scipy,numpy,csv,cmath,math
-from scipy import signal as sgn
+import pylab,scipy,csv,cmath,math
+from math import *
+from numpy import *
+from scipy import signal as sg
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 #singlephase analysis
 def sphan(X):
     ###  X:is a dictionary with the time, voltage and current signals for a single phase analysis
-    data=X['data'];    Ncycle=X['Ncycle']; fe=X[fe]; chnncurr=X['chancur']
+    data=X['data'];    Ncycle=X['Ncycle']; fe=X['fe']; channcurr=X['channcur']
     time=data[:,0]; #time signal from scopes or pcs
     time=time-min(time) #time signal shifted to zero t
     Ts=abs(time[1]-time[0]); #sampling period
@@ -70,17 +74,17 @@ def sphan(X):
     colinf=array(['Freq','I_harmonics rms','I_harmonics %','V_harmonics rms','V_harmonics %'])
     Harmoinf={'Harmo':Harmo,'colinfo':colinf}
     current={'I0':I0,'I50':I50,'Irms':Irms,'I_THDf':I_THDf,'I_THDr':I_THDr}
-    voltage={'I0':V0,'I50':V50,'Irms':Vrms,'I_THDf':I_THDf,'V_THDr':V_THDr}
+    voltage={'V0':V0,'V50':V50,'Vrms':Vrms,'V_THDf':I_THDf,'V_THDr':V_THDr}
     ##put more analysis
-    report={'current':current, 'Voltage':voltage,'f_50':f_50,'Harmonics':Harmoinf,'DPF':DPF,'PF':PF,'cos_phi':cos_phi}
+    report={'Fhs':Fhs,'current':current, 'voltage':voltage,'fe':f_50,'Harmonics':Harmoinf,'DPF':DPF,'PF':PF,'cos_phi':cos_phi,'pinst':pinst,'time':time,'I':I,'V':V}
     return report
 
 
-def savereport(report,reportname):
+def savereport(report,reportname,name):
     with open(reportname, 'wb') as csvfile:
         stwriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         stwriter.writerow(['Report of :'] + [name])
-        stwriter.writerow(['Fundamental frequency [Hz]'] + [str(fe)])
+        stwriter.writerow(['Fundamental frequency [Hz]'] + [str(report['fe'])])
         stwriter.writerow(['DC current [A]'] + [str(report['current']['I0'])])
         stwriter.writerow(['DC voltage [V]'] + [str(report['voltage']['V0'])])
         stwriter.writerow(['Fundamental current rms [A]'] + [str(report['current']['I50'])]+['Fundamental current peak [A]'] + [str(report['current']['I50']*sqrt(2))])
@@ -97,3 +101,63 @@ def savereport(report,reportname):
                 stwriter.writerow([str(i)])
     
 #################################################################
+def grafic(report):
+    time=report['time']
+    I=report['I']
+    V=report['V']
+    pinst=report['pinst']
+    Freq=report['Fhs']
+    Ln=I.shape[0] #size of the signals
+    ####time domain signals
+    plt.figure(1)
+    plt.subplot(311)
+    plt.plot(time[0:Ln],I)
+    plt.title('Current [A]')
+    plt.ylabel('I(t) [A]')
+    plt.grid(True)
+    plt.subplot(312)
+    plt.plot(time[0:Ln],V)
+    plt.title('Voltage [V]')
+    plt.ylabel('V(t) [V]')
+    plt.grid(True)
+    #plt.xlabel('Time [s]')
+    plt.subplot(313)
+    plt.plot(time[0:Ln],pinst)
+    plt.title('Instantaneous power [W]')
+    plt.ylabel('P(t) [W]')
+    plt.xlabel('Time [s]')
+    plt.grid(True)
+
+    ###Fourier spectrum
+    plt.figure(2)
+    plt.subplot(211)
+    #plt.plot(Freq[0:lim],F_Id[0:lim])
+    plt.bar(np.hstack([array([0.0]),report['Fhs']]),np.hstack([array([report['current']['I0']]),report['Harmonics']['Harmo'][:,1]]), width=0.84, label="Current",align="center")
+    plt.xlim([0,50*50])
+    plt.ylabel('I($\omega$) [A$_{rms}$]')
+    plt.grid(True)
+    plt.subplot(212)
+    #plt.plot(Freq[0:lim],F_Vd[0:lim])
+    plt.bar(np.hstack([array([0.0]),report['Fhs']]),np.hstack([array([report['voltage']['V0']]),report['Harmonics']['Harmo'][:,3]]), width=0.84, label="Current",align="center")
+    plt.xlim([0,50*50])
+    plt.ylabel('V($\omega$) [V$_{rms}$]')
+    plt.grid(True)
+    ###Fourier spectrum in % of the I50
+    plt.figure(3)
+    plt.subplot(211)
+    #plt.plot(Freq[0:lim],F_Id[0:lim])
+    plt.bar(np.hstack([array([0.0]),report['Fhs']]),100*np.hstack([array([report['current']['I0']]),report['Harmonics']['Harmo'][:,1]])/report['current']['I50'], width=0.84, label="Current",align="center")
+    plt.xlim([0,50*50])
+    plt.ylim([0,101])
+    plt.ylabel('I($\omega$) [%]')
+    plt.grid(True)
+    plt.subplot(212)
+    #plt.plot(Freq[0:lim],F_Vd[0:lim])
+    plt.bar(np.hstack([array([0.0]),report['Fhs']]),100*np.hstack([array([report['voltage']['V0']]),report['Harmonics']['Harmo'][:,3]])/report['voltage']['V50'], width=0.84, label="Voltage",align="center")
+    plt.xlim([0,50*50])
+    plt.ylim([0,101])
+    plt.ylabel('V($\omega$) [ %]')
+    plt.grid(True)
+    plt.xlabel('Frequency [Hz]')
+
+    plt.show()

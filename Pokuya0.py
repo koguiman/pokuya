@@ -17,13 +17,13 @@ from formlayout import fedit
 ###########################
 datalist = [("Provide file name",""),
             ('Number of cycles',3),
-            ('Save report',True)
+            ('Save report',True),
+            ('Current channel',1)
             ]
 
 filename=fedit(datalist,title="Pokuya",comment="Please provide")
 
-print "File name:"
-
+#print "File name:"
 ###########################
 ##########Single phase tests
 ###########inputs part
@@ -31,6 +31,7 @@ name=str(filename[0])
 fe=float(50) #electrical frequecy. Eur=50Hz, American countries=60Hz
 Ncycle=filename[1] #number of cycles to be analyzed
 saverep=filename[2]
+channcurr=filename[3]
 ###########output ports
 reportname='{0}{1}'.format('reportof_',name)
 ########################
@@ -39,12 +40,16 @@ x=csv.reader(open(name),delimiter=',')
 ###load data and info from source file
 [data,info]=csvtodato(x)
 ####read data
+
 time=data[:,0]; #time signal from scopes or pcs
 time=time-min(time) #time signal shifted to zero t
 Ts=abs(time[1]-time[0]); #sampling period
-I=data[:,1] #current signal
-V=data[:,3] #voltage signal
-
+if (channcurr==1):
+        I=data[:,1] #current signal
+        V=data[:,3] #voltage signal
+elif (channcurr==2):
+        I=data[:,3] #current signal
+        V=data[:,1] #voltage signal
 ###############If a resampling is necessary
 
 Fs=ceil(1.0/(Ts)); #sampling frequecy
@@ -87,13 +92,13 @@ maxhar=50; #maximmun harmonic to be represented
 Ihs=F_Id[f_50:f_50*maxhar:f_50]/sqrt(2.)#Harmonics current rms
 Vhs=F_Vd[f_50:f_50*maxhar:f_50]/sqrt(2.)#Harmonics current rms
 Fhs=Freq[f_50:f_50*maxhar:f_50]#Harmonics value 
-I_THDf=sqrt(sum(Ihs**2))/I50 #THD respect the fundamental
-V_THDf=sqrt(sum(Vhs**2))/V50 #THD respect the fundamental
+I_THDf=sqrt(sum(Ihs[1:Ihs.shape[0]]**2))/I50 #THD respect the fundamental
+V_THDf=sqrt(sum(Vhs[1:Vhs.shape[0]]**2))/V50 #THD respect the fundamental
 I_THDr=I_THDf/sqrt(1+(I_THDf**2))# THD respect the distorted signal
 V_THDr=V_THDf/sqrt(1+(V_THDf**2))# THD respect the distorted signal
-DPF=1./sqrt(1.+I_THDf) #displacement power factor #cos(ph_Vd[f_50]-ph_Id[f_50])
-Irms=sqrt((1./(1+Ihs.shape[0]))*(I50**2+sum(Ihs**2)))
-Vrms=sqrt((1./(1+Vhs.shape[0]))*(V50**2+sum(Vhs**2)))
+DPF=1./sqrt(1.+I_THDf) #displacement power factor 
+Irms=I50*sqrt(1+I_THDf**2)
+Vrms=V50*sqrt(1+V_THDf**2)
 PF=DPF*(I50/Irms) ##power factor
 cos_phi=cos(ph_Vd[f_50]-ph_Id[f_50]) #cos? phi, phi:angle between the voltage and current at fe
 Paver=mean(pinst) #average power
@@ -119,6 +124,10 @@ if (saverep==True):
             stwriter.writerow(['Voltage: THDr'] + [str(V_THDr)])
             stwriter.writerow(['Displacement power factor DPF'] + [str(DPF)])
             stwriter.writerow(['Power factor PF'] + [str(PF)])
+            stwriter.writerow(['cos(phi)'] + [str(cos_phi)])
+            stwriter.writerow(['Aparent Power [VA] at ']+[str(fe)]+['Hz'] + [str(S50)])
+            stwriter.writerow(['Active Power [W] at ']+[str(fe)]+['Hz'] + [str(P50)])
+            stwriter.writerow(['Reactive Power [VAr] at ']+[str(fe)]+['Hz'] + [str(Q50)])
             stwriter.writerow(['Harmonics']+['Ih']+['%I1']+['Vh']+['%V1'])
             # Fhs,Ihs,Vhs
             Harmo=c_[Fhs,Ihs,(100*Ihs/I50),Vhs,(100*Vhs/V50)]
@@ -163,4 +172,23 @@ plt.xlim([0,50*50])
 plt.ylabel('V($\omega$) [V$_{rms}$]')
 plt.grid(True)
 plt.xlabel('Frequency [Hz]')
+
+###Fourier spectrum in % of the I50
+plt.figure(3)
+plt.subplot(211)
+#plt.plot(Freq[0:lim],F_Id[0:lim])
+plt.bar(np.hstack([array([0.0]),Fhs]),100*np.hstack([array([I0]),Ihs])/I50, width=0.84, label="Current",align="center")
+plt.xlim([0,50*50])
+plt.ylim([0,101])
+plt.ylabel('I($\omega$) [%]')
+plt.grid(True)
+plt.subplot(212)
+#plt.plot(Freq[0:lim],F_Vd[0:lim])
+plt.bar(np.hstack([array([0.0]),Fhs]),100*np.hstack([array([V0]),Vhs])/V50, width=0.84, label="Current",align="center")
+plt.xlim([0,50*50])
+plt.ylim([0,101])
+plt.ylabel('V($\omega$) [ %]')
+plt.grid(True)
+plt.xlabel('Frequency [Hz]')
+
 plt.show()
