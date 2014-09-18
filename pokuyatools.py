@@ -58,7 +58,9 @@ def sphan(X):
     V50=F_Vd[f_50]/sqrt(2.)#fundamental voltage component
     maxhar=50; #maximmun harmonic to be represented
     Ihs=F_Id[f_50:f_50*maxhar:f_50]/sqrt(2.)#Harmonics current rms
-    Vhs=F_Vd[f_50:f_50*maxhar:f_50]/sqrt(2.)#Harmonics current rms
+    Iph_hs=ph_Id[f_50:f_50*maxhar:f_50]*(180./np.pi)#Harmonics current angle in deg
+    Vhs=F_Vd[f_50:f_50*maxhar:f_50]/sqrt(2.)#Harmonics voltage rms
+    Vph_hs=ph_Vd[f_50:f_50*maxhar:f_50]*(180./np.pi)#Harmonics voltage angle in deg
     Fhs=Freq[f_50:f_50*maxhar:f_50]#Harmonics value 
     I_THDf=sqrt(sum(Ihs[1:Ihs.shape[0]]**2))/I50 #THD respect the fundamental
     V_THDf=sqrt(sum(Vhs[1:Vhs.shape[0]]**2))/V50 #THD respect the fundamental
@@ -70,11 +72,11 @@ def sphan(X):
     PF=DPF*(I50/Irms) ##power factor
     cos_phi=cos(ph_Vd[f_50]-ph_Id[f_50]) #cos? phi, phi:angle between the voltage and current at fe
     Paver=mean(pinst) #average power
-    Harmo=c_[Fhs,Ihs,(100*Ihs/I50),Vhs,(100*Vhs/V50)]
-    colinf=array(['Freq','I_harmonics rms','I_harmonics %','V_harmonics rms','V_harmonics %'])
+    Harmo=c_[Fhs,Ihs,(100*Ihs/I50),Iph_hs,Vhs,(100*Vhs/V50),Vph_hs]
+    colinf=array(['Freq Hz','I_harmonics rms','I_harmonics %','angle_I deg','V_harmonics rms','V_harmonics %','angle_V deg'])
     Harmoinf={'Harmo':Harmo,'colinfo':colinf}
     current={'I0':I0,'I50':I50,'Irms':Irms,'I_THDf':I_THDf,'I_THDr':I_THDr}
-    voltage={'V0':V0,'V50':V50,'Vrms':Vrms,'V_THDf':I_THDf,'V_THDr':V_THDr}
+    voltage={'V0':V0,'V50':V50,'Vrms':Vrms,'V_THDf':V_THDf,'V_THDr':V_THDr}
     ##put more analysis
     report={'Fhs':Fhs,'current':current, 'voltage':voltage,'fe':f_50,'Harmonics':Harmoinf,'DPF':DPF,'PF':PF,'cos_phi':cos_phi,'pinst':pinst,'time':time,'I':I,'V':V}
     return report
@@ -82,7 +84,7 @@ def sphan(X):
 
 def savereport(report,reportname,name):
     with open(reportname, 'wb') as csvfile:
-        stwriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        stwriter = csv.writer(csvfile, delimiter=' ',  quoting=csv.QUOTE_MINIMAL)#quotechar= '|',
         stwriter.writerow(['Report of :'] + [name])
         stwriter.writerow(['Fundamental frequency [Hz]'] + [str(report['fe'])])
         stwriter.writerow(['DC current [A]'] + [str(report['current']['I0'])])
@@ -138,7 +140,7 @@ def grafic(report):
     plt.grid(True)
     plt.subplot(212)
     #plt.plot(Freq[0:lim],F_Vd[0:lim])
-    plt.bar(np.hstack([array([0.0]),report['Fhs']]),np.hstack([array([report['voltage']['V0']]),report['Harmonics']['Harmo'][:,3]]), width=0.84, label="Current",align="center")
+    plt.bar(np.hstack([array([0.0]),report['Fhs']]),np.hstack([array([report['voltage']['V0']]),report['Harmonics']['Harmo'][:,4]]), width=0.84, label="Current",align="center")
     plt.xlim([0,50*50])
     plt.ylabel('V($\omega$) [V$_{rms}$]')
     plt.grid(True)
@@ -153,7 +155,7 @@ def grafic(report):
     plt.grid(True)
     plt.subplot(212)
     #plt.plot(Freq[0:lim],F_Vd[0:lim])
-    plt.bar(np.hstack([array([0.0]),report['Fhs']]),100*np.hstack([array([report['voltage']['V0']]),report['Harmonics']['Harmo'][:,3]])/report['voltage']['V50'], width=0.84, label="Voltage",align="center")
+    plt.bar(np.hstack([array([0.0]),report['Fhs']]),100*np.hstack([array([report['voltage']['V0']]),report['Harmonics']['Harmo'][:,4]])/report['voltage']['V50'], width=0.84, label="Voltage",align="center")
     plt.xlim([0,50*50])
     plt.ylim([0,101])
     plt.ylabel('V($\omega$) [ %]')
