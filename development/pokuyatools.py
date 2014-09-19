@@ -78,7 +78,7 @@ def sphan(X):
     current={'I0':I0,'I50':I50,'Irms':Irms,'I_THDf':I_THDf,'I_THDr':I_THDr}
     voltage={'V0':V0,'V50':V50,'Vrms':Vrms,'V_THDf':V_THDf,'V_THDr':V_THDr}
     ##put more analysis
-    report={'Fhs':Fhs,'current':current, 'voltage':voltage,'fe':f_50,'Harmonics':Harmoinf,'DPF':DPF,'PF':PF,'cos_phi':cos_phi,'pinst':pinst,'time':time,'I':I,'V':V}
+    report={'Fhs':Fhs,'current':current, 'voltage':voltage,'fe':Freq[f_50],'Harmonics':Harmoinf,'DPF':DPF,'PF':PF,'cos_phi':cos_phi,'pinst':pinst,'time':time,'I':I,'V':V}
     return report
 
 
